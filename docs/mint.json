@@ -72,6 +72,7 @@
             "language-models/hosted-models/aws-sagemaker",
             "language-models/hosted-models/baseten",
             "language-models/hosted-models/cloudflare",
+            "language-models/hosted-models/nvidia-nim",
             "language-models/hosted-models/cohere",
             "language-models/hosted-models/ai21",
             "language-models/hosted-models/deepinfra",

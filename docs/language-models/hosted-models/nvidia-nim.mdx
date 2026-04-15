@@ -1,0 +1,60 @@
+---
+title: NVIDIA NIM
+---
+
+Open Interpreter supports NVIDIA NIM via LiteLLM's OpenAI-compatible provider route.
+
+Use the `nvidia_nim/` model prefix, for example:
+
+<CodeGroup>
+
+```bash Terminal
+interpreter --model nvidia_nim/meta/llama-3.1-8b-instruct
+```
+
+```python Python
+from interpreter import interpreter
+
+interpreter.llm.model = "nvidia_nim/meta/llama-3.1-8b-instruct"
+interpreter.chat()
+```
+
+</CodeGroup>
+
+## Shorthand aliases
+
+Open Interpreter also supports these shorthand model names:
+
+- `llama-3.1-8b` → `nvidia_nim/meta/llama-3.1-8b-instruct`
+- `llama-3.1-70b` → `nvidia_nim/meta/llama-3.1-70b-instruct`
+- `llama-3.1-405b` → `nvidia_nim/meta/llama-3.1-405b-instruct`
+- `llama-3.3-70b` → `nvidia_nim/meta/llama-3.3-70b-instruct`
+- `llama-4-maverick` → `nvidia_nim/meta/llama-4-maverick-17b-128e-instruct`
+- `nemotron-70b` → `nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct`
+- `nemotron-ultra` → `nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1`
+- `nemotron-340b` → `nvidia_nim/nvidia/nemotron-4-340b-instruct`
+- `deepseek-v3` → `nvidia_nim/deepseek-ai/deepseek-v3.2`
+- `qwen3-coder` → `nvidia_nim/qwen/qwen3-coder-480b-a35b-instruct`
+
+You can also use `nvidia/...` and Open Interpreter will normalize it to `nvidia_nim/...`.
+
+## Required environment variables
+
+Set one of the following environment variables:
+
+| Environment Variable   | Description                         |
+| ---------------------- | ----------------------------------- |
+| `NVIDIA_API_KEY`       | NVIDIA API key for NIM requests     |
+| `NVIDIA_NIM_API_KEY`   | Alternate environment variable name |
+
+## Optional settings
+
+By default, Open Interpreter uses:
+
+- `api_base = https://integrate.api.nvidia.com/v1`
+- Model-specific `context_window` values for common NIM models
+- `max_tokens` default of 20% of context window (capped at 4096)
+
+## Notes
+
+NIM is OpenAI-compatible, so Open Interpreter uses the standard LiteLLM request path.
