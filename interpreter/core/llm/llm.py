@@ -29,6 +29,40 @@ from .utils.convert_to_openai_messages import convert_to_openai_messages
 # Create or get the logger
 logger = logging.getLogger("LiteLLM")
 
+NVIDIA_MODEL_ALIASES = {
+    "llama-3.1-8b": "nvidia_nim/meta/llama-3.1-8b-instruct",
+    "llama-3.1-70b": "nvidia_nim/meta/llama-3.1-70b-instruct",
+    "llama-3.1-405b": "nvidia_nim/meta/llama-3.1-405b-instruct",
+    "llama-3.3-70b": "nvidia_nim/meta/llama-3.3-70b-instruct",
+    "llama-4-maverick": "nvidia_nim/meta/llama-4-maverick-17b-128e-instruct",
+    "nemotron-70b": "nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct",
+    "nemotron-ultra": "nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1",
+    "nemotron-340b": "nvidia_nim/nvidia/nemotron-4-340b-instruct",
+    "deepseek-v3": "nvidia_nim/deepseek-ai/deepseek-v3.2",
+    "qwen3-coder": "nvidia_nim/qwen/qwen3-coder-480b-a35b-instruct",
+}
+
+NVIDIA_CONTEXT_WINDOWS = {
+    "meta/llama-3.1-8b-instruct": 128000,
+    "meta/llama-3.1-70b-instruct": 128000,
+    "meta/llama-3.1-405b-instruct": 128000,
+    "meta/llama-3.3-70b-instruct": 128000,
+    "meta/llama-4-maverick-17b-128e-instruct": 1000000,
+    "nvidia/llama-3.1-nemotron-70b-instruct": 32768,
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1": 128000,
+    "nvidia/nemotron-4-340b-instruct": 4096,
+    "mistralai/mixtral-8x22b-instruct-v0.1": 65536,
+    "mistralai/mistral-large-2-instruct": 128000,
+    "deepseek-ai/deepseek-v3.2": 131072,
+    "qwen/qwen3-coder-480b-a35b-instruct": 32768,
+}
+
+NVIDIA_NIM_API_BASE = "https://integrate.api.nvidia.com/v1"
+
+def _get_nvidia_api_key():
+    """Get NVIDIA API key from environment, checking both legacy and standard keys."""
+    return os.getenv("NVIDIA_API_KEY") or os.getenv("NVIDIA_NIM_API_KEY")
+
 
 class SuppressDebugFilter(logging.Filter):
     def filter(self, record):
@@ -117,18 +151,6 @@ class Llm:
             model = "claude-3-5-sonnet-20240620"
             self.model = "claude-3-5-sonnet-20240620"
 
-        NVIDIA_MODEL_ALIASES = {
-            "llama-3.1-8b": "nvidia_nim/meta/llama-3.1-8b-instruct",
-            "llama-3.1-70b": "nvidia_nim/meta/llama-3.1-70b-instruct",
-            "llama-3.1-405b": "nvidia_nim/meta/llama-3.1-405b-instruct",
-            "llama-3.3-70b": "nvidia_nim/meta/llama-3.3-70b-instruct",
-            "llama-4-maverick": "nvidia_nim/meta/llama-4-maverick-17b-128e-instruct",
-            "nemotron-70b": "nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct",
-            "nemotron-ultra": "nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1",
-            "nemotron-340b": "nvidia_nim/nvidia/nemotron-4-340b-instruct",
-            "deepseek-v3": "nvidia_nim/deepseek-ai/deepseek-v3.2",
-            "qwen3-coder": "nvidia_nim/qwen/qwen3-coder-480b-a35b-instruct",
-        }
         if model in NVIDIA_MODEL_ALIASES:
             model = NVIDIA_MODEL_ALIASES[model]
             self.model = model
@@ -357,18 +379,6 @@ Continuing...
         if self._is_loaded:
             return
 
-        NVIDIA_MODEL_ALIASES = {
-            "llama-3.1-8b": "nvidia_nim/meta/llama-3.1-8b-instruct",
-            "llama-3.1-70b": "nvidia_nim/meta/llama-3.1-70b-instruct",
-            "llama-3.1-405b": "nvidia_nim/meta/llama-3.1-405b-instruct",
-            "llama-3.3-70b": "nvidia_nim/meta/llama-3.3-70b-instruct",
-            "llama-4-maverick": "nvidia_nim/meta/llama-4-maverick-17b-128e-instruct",
-            "nemotron-70b": "nvidia_nim/nvidia/llama-3.1-nemotron-70b-instruct",
-            "nemotron-ultra": "nvidia_nim/nvidia/llama-3.1-nemotron-ultra-253b-v1",
-            "nemotron-340b": "nvidia_nim/nvidia/nemotron-4-340b-instruct",
-            "deepseek-v3": "nvidia_nim/deepseek-ai/deepseek-v3.2",
-            "qwen3-coder": "nvidia_nim/qwen/qwen3-coder-480b-a35b-instruct",
-        }
         if self.model in NVIDIA_MODEL_ALIASES:
             self.model = NVIDIA_MODEL_ALIASES[self.model]
 
@@ -440,38 +450,22 @@ Continuing...
         if self.model.startswith("nvidia_nim/"):
             model_name = self.model.replace("nvidia_nim/", "", 1)
 
-            if not self.api_base:
-                self.api_base = "https://integrate.api.nvidia.com/v1"
+            if self.model.startswith("nvidia_nim/") and not self.api_base:
+                self.api_base = NVIDIA_NIM_API_BASE
 
             if not self.api_key:
-                self.api_key = os.getenv("NVIDIA_API_KEY") or os.getenv(
-                    "NVIDIA_NIM_API_KEY"
-                )
+                self.api_key = _get_nvidia_api_key()
                 if not self.api_key:
                     self.interpreter.display_message(
                         f"> Missing NVIDIA API key\n\nTo use `{model_name}`, set either `NVIDIA_API_KEY` or `NVIDIA_NIM_API_KEY`.\n"
                     )
                     exit()
 
-            nvidia_context_windows = {
-                "meta/llama-3.1-8b-instruct": 128000,
-                "meta/llama-3.1-70b-instruct": 128000,
-                "meta/llama-3.1-405b-instruct": 128000,
-                "meta/llama-3.3-70b-instruct": 128000,
-                "meta/llama-4-maverick-17b-128e-instruct": 1000000,
-                "nvidia/llama-3.1-nemotron-70b-instruct": 32768,
-                "nvidia/llama-3.1-nemotron-ultra-253b-v1": 128000,
-                "nvidia/nemotron-4-340b-instruct": 4096,
-                "mistralai/mixtral-8x22b-instruct-v0.1": 65536,
-                "mistralai/mistral-large-2-instruct": 128000,
-                "deepseek-ai/deepseek-v3.2": 131072,
-                "qwen/qwen3-coder-480b-a35b-instruct": 32768,
-            }
-            model_context_window = nvidia_context_windows.get(model_name, 8192)
+            model_context_window = NVIDIA_CONTEXT_WINDOWS.get(model_name, 8192)
 
             if self.context_window == None:
                 self.context_window = model_context_window
-            if self.max_tokens is None:
+            if self.max_tokens == None:
                 self.max_tokens = min(int(model_context_window * 0.2), 4096)
 
         # Validate LLM should be moved here!!
