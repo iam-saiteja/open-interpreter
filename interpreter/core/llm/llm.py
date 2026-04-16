@@ -420,7 +420,7 @@ Continuing...
                 requests.post(f"{api_base}/api/pull", json={"name": model_name})
 
             # Get context window if not set
-            if self.context_window == None:
+            if self.context_window is None:
                 response = requests.post(
                     f"{api_base}/api/show", json={"name": model_name}
                 )
@@ -432,7 +432,7 @@ Continuing...
                         break
                 if context_length is not None:
                     self.context_window = context_length
-            if self.max_tokens == None:
+            if self.max_tokens is None:
                 if self.context_window != None:
                     self.max_tokens = int(self.context_window * 0.2)
 
@@ -463,9 +463,9 @@ Continuing...
 
             model_context_window = NVIDIA_CONTEXT_WINDOWS.get(model_name, 8192)
 
-            if self.context_window == None:
+            if self.context_window is None:
                 self.context_window = model_context_window
-            if self.max_tokens == None:
+            if self.max_tokens is None:
                 self.max_tokens = min(int(model_context_window * 0.2), 4096)
 
         # Validate LLM should be moved here!!
